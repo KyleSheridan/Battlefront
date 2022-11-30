@@ -10,6 +10,9 @@ public class ThirdPersonShooterController : MonoBehaviour
     [SerializeField] private float normalSensitivity;
     [SerializeField] private float aimSensitivity;
     [SerializeField] private LayerMask aimColliderLayerMask = new LayerMask();
+    [SerializeField] private Transform bulletProjectile;
+    [SerializeField] private Transform bulletSpawnPosision;
+
     private Vector3 aimPoint;
     private float aimRotationSpeed = 20f;
 
@@ -50,6 +53,12 @@ public class ThirdPersonShooterController : MonoBehaviour
             thirdPersonController.SetRotateOnMove(true);
         }
 
+        if(starterAssetsInputs.shoot)
+        {
+            Vector3 aimDir = (aimPoint - bulletSpawnPosision.position).normalized;
+            Instantiate(bulletProjectile, bulletSpawnPosision.position, Quaternion.LookRotation(aimDir, Vector3.up));
+            starterAssetsInputs.shoot = false;
+        }
     }
 
     private void OnDrawGizmos()
