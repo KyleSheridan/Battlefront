@@ -12,9 +12,19 @@ public class ThirdPersonShooterController : MonoBehaviour
     [SerializeField] private LayerMask aimColliderLayerMask = new LayerMask();
     [SerializeField] private Transform bulletProjectile;
     [SerializeField] private Transform bulletSpawnPosision;
+    [SerializeField] private float fireRate;
+    [Range(0, 1)]
+    [SerializeField] private float accuracy;
+    [Tooltip("Percentage of accuracy when shooting without aiming.")]
+    [Range(0, 1)]
+    [SerializeField] private float hipfireAccuracy;
 
     private Vector3 aimPoint;
     private float aimRotationSpeed = 20f;
+
+    private bool canShoot = true;
+
+    private float currentAccuracy;
 
     private ThirdPersonController thirdPersonController;
     private StarterAssetsInputs starterAssetsInputs;
@@ -33,6 +43,10 @@ public class ThirdPersonShooterController : MonoBehaviour
         {
             aimPoint = hit.point;
         }
+        
+        Vector3 worldAimTarget = aimPoint;
+        worldAimTarget.y = transform.position.y;
+        Vector3 aimDirection = (worldAimTarget - transform.position).normalized;
 
         if (starterAssetsInputs.aim)
         {
@@ -40,25 +54,47 @@ public class ThirdPersonShooterController : MonoBehaviour
             thirdPersonController.SetSensitivity(aimSensitivity);
             thirdPersonController.SetRotateOnMove(false);
 
-            Vector3 worldAimTarget = aimPoint;
-            worldAimTarget.y = transform.position.y;
-            Vector3 aimDirection = (worldAimTarget - transform.position).normalized;
-
             transform.forward = Vector3.Lerp(transform.forward, aimDirection, aimRotationSpeed * Time.deltaTime);
+
+            currentAccuracy = accuracy;
         }
         else
         {
             aimVirtualCamera.gameObject.SetActive(false);
             thirdPersonController.SetSensitivity(normalSensitivity);
             thirdPersonController.SetRotateOnMove(true);
+
+            currentAccuracy = accuracy * hipfireAccuracy;
         }
 
-        if(starterAssetsInputs.shoot)
+        if(starterAssetsInputs.shoot && canShoot)
         {
+            transform.forward = Vector3.Lerp(transform.forward, aimDirection, aimRotationSpeed * Time.deltaTime);
+
             Vector3 aimDir = (aimPoint - bulletSpawnPosision.position).normalized;
-            Instantiate(bulletProjectile, bulletSpawnPosision.position, Quaternion.LookRotation(aimDir, Vector3.up));
-            starterAssetsInputs.shoot = false;
+
+            float spread = (15 - (15 * currentAccuracy)) * Mathf.Deg2Rad;
+
+            Vector3 shootDir = aimDir;
+
+            shootDir.x += Random.Range(-spread, spread);
+            shootDir.y += Random.Range(-spread, spread);
+            shootDir.z += Random.Range(-spread, spread);
+
+            Instantiate(bulletProjectile, bulletSpawnPosision.position, Quaternion.LookRotation(shootDir, Vector3.up));
+            //starterAssetsInputs.shoot = false;
+
+            StartCoroutine(ShootWait(1 / fireRate));
         }
+    }
+
+    IEnumerator ShootWait(float waitTime)
+    {
+        canShoot = false;
+
+        yield return new WaitForSeconds(waitTime);
+
+        canShoot = true;
     }
 
     private void OnDrawGizmos()
