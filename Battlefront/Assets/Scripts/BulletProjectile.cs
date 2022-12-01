@@ -6,6 +6,8 @@ public class BulletProjectile : MonoBehaviour
 {
     private Rigidbody rb;
 
+    private float lifetime;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -15,11 +17,23 @@ public class BulletProjectile : MonoBehaviour
     {
         float speed = 40f;
         rb.velocity = transform.forward * speed;
+
+        lifetime = 10f;
+    }
+
+    private void Update()
+    {
+        lifetime -= Time.deltaTime;
+
+        if(lifetime < 0)
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if(tag == "Bullet") { return; }
+        if(other.tag == "Bullet") { return; }
         Destroy(gameObject);
     }
 }

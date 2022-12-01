@@ -12,12 +12,26 @@ public class ThirdPersonShooterController : MonoBehaviour
     [SerializeField] private LayerMask aimColliderLayerMask = new LayerMask();
     [SerializeField] private Transform bulletProjectile;
     [SerializeField] private Transform bulletSpawnPosision;
+
+
+    private enum ShootType
+    {
+        AUTOMATIC,
+        BURST,
+        SINGLEFIRE
+    }
+
+    [Header("Shooting")]
+
+    [SerializeField] private ShootType shootingType;
     [SerializeField] private float fireRate;
     [Range(0, 1)]
     [SerializeField] private float accuracy;
     [Tooltip("Percentage of accuracy when shooting without aiming.")]
     [Range(0, 1)]
     [SerializeField] private float hipfireAccuracy;
+    [Range(1, 20)]
+    [SerializeField] private int numberOfbullets;
 
     private Vector3 aimPoint;
     private float aimRotationSpeed = 20f;
@@ -67,24 +81,56 @@ public class ThirdPersonShooterController : MonoBehaviour
             currentAccuracy = accuracy * hipfireAccuracy;
         }
 
-        if(starterAssetsInputs.shoot && canShoot)
+        if (starterAssetsInputs.shoot)
         {
             transform.forward = Vector3.Lerp(transform.forward, aimDirection, aimRotationSpeed * Time.deltaTime);
+
+            thirdPersonController.SetRotateOnMove(false);
+
+            if (!canShoot) { return; }
 
             Vector3 aimDir = (aimPoint - bulletSpawnPosision.position).normalized;
 
             float spread = (15 - (15 * currentAccuracy)) * Mathf.Deg2Rad;
 
-            Vector3 shootDir = aimDir;
+            switch (shootingType)
+            {
+                case ShootType.AUTOMATIC:
+                    StartCoroutine(ShootWait(1 / fireRate));
+                    break;
+                case ShootType.BURST:
+                    break;
+                case ShootType.SINGLEFIRE:
+                    StartCoroutine(ShootWait(1 / fireRate));
+                    starterAssetsInputs.shoot = false;
+                    break;
+                default:
+                    break;
+            }
 
-            shootDir.x += Random.Range(-spread, spread);
-            shootDir.y += Random.Range(-spread, spread);
-            shootDir.z += Random.Range(-spread, spread);
+            for (int i = 0; i < numberOfbullets; i++)
+            {
+                Vector3 shootDir = aimDir;
 
-            Instantiate(bulletProjectile, bulletSpawnPosision.position, Quaternion.LookRotation(shootDir, Vector3.up));
-            //starterAssetsInputs.shoot = false;
+                shootDir.x += Random.Range(-spread, spread);
+                shootDir.y += Random.Range(-spread, spread);
+                shootDir.z += Random.Range(-spread, spread);
 
-            StartCoroutine(ShootWait(1 / fireRate));
+                Instantiate(bulletProjectile, bulletSpawnPosision.position, Quaternion.LookRotation(shootDir, Vector3.up));
+            }
+
+            if(fireRate > 0)
+            {
+                StartCoroutine(ShootWait(1 / fireRate));
+            }
+            else
+            {
+                starterAssetsInputs.shoot = false;
+            }
+        }
+        else
+        {
+            thirdPersonController.SetRotateOnMove(true);
         }
     }
 

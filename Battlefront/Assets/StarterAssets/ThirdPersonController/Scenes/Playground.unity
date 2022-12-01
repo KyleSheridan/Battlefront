@@ -1555,9 +1555,11 @@ MonoBehaviour:
     m_Bits: 1
   bulletProjectile: {fileID: 7389748590238278485, guid: 07f36dfa968454246ba012cbef2391fd, type: 3}
   bulletSpawnPosision: {fileID: 1113624211}
-  fireRate: 6
+  shootingType: 0
+  fireRate: 10
   accuracy: 0.93
   hipfireAccuracy: 0.82
+  numberOfbullets: 1
 --- !u!4 &1762682267 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3893294197879345259, guid: 64dce48905ffd9b4293e595fa6941544, type: 3}
